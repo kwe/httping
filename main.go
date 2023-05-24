@@ -19,7 +19,7 @@ type retryClient struct {
 func main() {
 	fmt.Println("Hello, World!")
 
-	url := "http://example.com"
+	url := "https://gallery.welshrugbypics.co.uk/api/events"
 	client := &retryClient{
 		client: &http.Client{
 			Timeout: time.Second * 20,
@@ -45,21 +45,22 @@ func (rc *retryClient) retryRequest(url string, maxRetries int) ([]byte, error) 
 		}
 		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
-			return body, err
+			return nil, err
 		}
 
 		resp, err := client.Do(req)
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode == http.StatusUnauthorized {
 			// we need to retry after a random little wait
 			randomBackoff := time.Duration(rand.Int63n(int64(maxBackoffTime-minBackoffTime))) + minBackoffTime
 			time.Sleep(randomBackoff)
+
 			minBackoffTime *= 2
 			maxBackoffTime *= 2
+
 			retryCount++
 		} else if resp.StatusCode == http.StatusOK {
 			body, err = io.ReadAll(resp.Body)
@@ -73,6 +74,10 @@ func (rc *retryClient) retryRequest(url string, maxRetries int) ([]byte, error) 
 				return nil, err
 			}
 			return body, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		}
+		err = resp.Body.Close()
+		if err != nil {
+			return nil, err
 		}
 	}
 	if retryCount > maxRetries {
