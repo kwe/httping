@@ -71,8 +71,16 @@ func (rc *retryClient) retryRequest(url string, maxRetries int) ([]byte, error) 
 			}
 
 			break // we're done, no need to retry
+
 		} else {
-			// some other error, I guess don't read the body?
+
+			// Some other error, I guess don't read the body, but we still might need to close it
+			if resp.Body != nil {
+				err = resp.Body.Close()
+				if err != nil {
+					return nil, err
+				}
+			}
 
 			return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
