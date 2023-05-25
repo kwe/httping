@@ -40,15 +40,13 @@ func (rc *retryClient) retryRequest(url string, maxRetries int) ([]byte, error) 
 	maxBackoffTime := time.Second * 2
 
 	for retryCount <= maxRetries {
-		client := http.Client{
-			Timeout: time.Second * 20,
-		}
+
 		req, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
 			return nil, err
 		}
 
-		resp, err := client.Do(req)
+		resp, err := rc.client.Do(req)
 		if err != nil {
 			return nil, err
 		}
@@ -74,16 +72,9 @@ func (rc *retryClient) retryRequest(url string, maxRetries int) ([]byte, error) 
 
 			break // we're done, no need to retry
 		} else {
-			body, err = io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-			err = resp.Body.Close()
-			if err != nil {
-				return nil, err
-			}
+			// some other error, I guess don't read the body?
 
-			return body, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+			return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
 
 	}

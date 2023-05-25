@@ -19,7 +19,7 @@ func (m *MockHttpClient) Do(req *http.Request) (*http.Response, error) {
 func TestRetryRequest(t *testing.T) {
 	mockClient := &MockHttpClient{}
 	client := &retryClient{client: mockClient}
-	url := "http://example.com"
+	url := "http://mock.com"
 
 	t.Run("TestMaxRetriesExceeded", func(t *testing.T) {
 		mockClient.DoFunc = func(req *http.Request) (*http.Response, error) {
@@ -65,8 +65,8 @@ func TestRetryRequest(t *testing.T) {
 
 		_, err := client.retryRequest(url, 1)
 
-		if err == nil || !strings.Contains(err.Error(), "received non-200 response") {
-			t.Errorf("Expected 'received non-200 response' error, got %v", err)
+		if err == nil || !strings.Contains(err.Error(), "unexpected status code") {
+			t.Errorf("Expected 'unexpected status code: 500' error, got %v", err)
 		}
 	})
 }
