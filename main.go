@@ -74,8 +74,12 @@ func (rc *retryClient) retryRequest(url string, maxRetries int) ([]byte, error) 
 
 		} else {
 
-			// Some other error, I guess don't read the body, but we still might need to close it
+			// Some other error, read the body to avoid memory leak and close it
 			if resp.Body != nil {
+				_, err = io.Copy(io.Discard, resp.Body) // WE READ THE BODY
+				if err != nil {
+					return nil, err
+				}
 				err = resp.Body.Close()
 				if err != nil {
 					return nil, err
